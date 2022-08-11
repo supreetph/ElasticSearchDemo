@@ -19,26 +19,29 @@ namespace ElasticSearchDemo.Controllers
 
         // GET api/<ProductsController>/5
         [HttpGet("{name}")]
-        public async Task<Products> Get(string name)
+        public async Task<IActionResult> Get(string name)
         {
-            var results = await _client.SearchAsync<Products>(s => s
-       .Query(q => q
-           .Match(t => t
-               .Field(f => f.id)
-               .Query(name)
-           )
-       )
-      );
+           var  results = await _client.SearchAsync<Products>(s => s
+            .Query(q => q
+                .Term(t => t
+                    .Field(f => f.Name)
+                    .Value(name)
+                )
+            )
+        );
 
-            return results.Documents.FirstOrDefault();
+             return Ok(results.Documents.ToList());
         }
 
         // POST api/<ProductsController>
         [HttpPost]
-        public Products Post([FromBody] Products value)
+        public async Task<IActionResult> Post( Products value)
         {
-            _client.IndexDocument<Products>(value);
-            return value;
+           await  _client.IndexDocumentAsync(value);
+            var createIndexResponse = _client.Indices.Create("products",
+            index => index.Map<Products>(x => x.AutoMap())
+        );
+            return Ok(value);
         }
 
         
